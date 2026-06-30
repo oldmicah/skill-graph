@@ -36,7 +36,7 @@
   text.ref-label     { font-size: 8px; fill: #64748b; pointer-events: none; }
 
   #tooltip {
-    position: absolute; background: rgba(15,17,23,0.95); border: 1px solid #334155;
+    position: fixed; background: rgba(15,17,23,0.95); border: 1px solid #334155;
     border-radius: 8px; padding: 10px 14px; max-width: 280px; pointer-events: none;
     font-size: 12px; line-height: 1.5; display: none; z-index: 10;
     box-shadow: 0 4px 20px rgba(0,0,0,0.5);
@@ -72,7 +72,7 @@
 </head>
 <body>
 <div id="container">
-  <svg id="graph">
+  <svg id="graph" style="touch-action:none">
     <defs>
       <marker id="arr" markerWidth="8" markerHeight="8" refX="18" refY="3" orient="auto">
         <path d="M0,0 L0,6 L8,3 z" fill="#f97316"/>
@@ -155,11 +155,14 @@ const svg = d3.select("#graph");
 const g   = svg.append("g");
 const W = window.innerWidth, H = window.innerHeight;
 
-// Block iOS scroll/bounce when interacting with graph
-const svgEl = document.getElementById("graph");
-svgEl.addEventListener("touchstart",  e => e.preventDefault(), { passive: false });
-svgEl.addEventListener("touchmove",   e => e.preventDefault(), { passive: false });
-svgEl.addEventListener("touchend",    e => e.preventDefault(), { passive: false });
+// Block iOS scroll/bounce — must be document-level, non-passive
+document.addEventListener("touchmove",  e => e.preventDefault(), { passive: false });
+document.addEventListener("touchstart", e => {
+  // Allow touches on controls/legend (they have scrollable content)
+  if (!e.target.closest("#controls") && !e.target.closest("#legend")) {
+    e.preventDefault();
+  }
+}, { passive: false });
 
 // Zoom — also rescales labels so they stay readable at any zoom level
 const zoomBehavior = d3.zoom().scaleExtent([0.08,5]).on("zoom", e => {
